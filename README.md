@@ -11,18 +11,19 @@
 
 ## MySQL
 
-[一、MySQL基本配置](mysql/读书笔记/一、MySQL基本配置.md)
+[一、MySQL基本配置](mysql/读书笔记/MySQL基本配置.md)
 
-[二、MySQL存储结构](mysql/读书笔记/二、MySQL存储结构.md)
+[二、MySQL存储结构](mysql/读书笔记/MySQL存储结构.md)
+[三、InnoDB索引](mysql/读书笔记/InnoDB索引.md)
 
-### Java
+## Java
 
 - 集合
 - 多线程
 
 - JVM
 
-### 数据结构
+## 数据结构
 
 - 线性结构
 
@@ -30,24 +31,24 @@
 
 - 图论
 
-### 算法
+## 算法
 - 动态规划算法
 - 分治法
 - 贪心算法
 - 回溯算法
 
-### Database
+## Database
 
 - MySQL
 - Redis
 - MongoDB
 
-### 架构
+## 架构
 
 - DDD
 - Microservice
 
-### 框架
+## 框架
 - Spring
 - Spring Cloud
 - Spring Boot 
