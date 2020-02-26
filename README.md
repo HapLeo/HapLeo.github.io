@@ -14,6 +14,7 @@
 [一、MySQL基本配置](mysql/读书笔记/MySQL基本配置.md)
 
 [二、MySQL存储结构](mysql/读书笔记/MySQL存储结构.md)
+
 [三、InnoDB索引](mysql/读书笔记/InnoDB索引.md)
 
 ## Java
