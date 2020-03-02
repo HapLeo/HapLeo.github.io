@@ -13,6 +13,8 @@
 
 [optimizer_trace](mysql/读书笔记/optimizer_trace.md)
 
+[buffer pool](mysql/读书笔记/Buffer Pool.md)
+
 ### 重点总结
 
 索引
