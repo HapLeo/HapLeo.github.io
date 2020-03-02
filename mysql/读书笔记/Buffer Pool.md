@@ -39,6 +39,10 @@ Buffer Pool被存满了怎么办？
 
 如果访问的页在young区前1/4部分，则不移动，以减少消耗。
 
+何时刷脏页到磁盘？
+
+innoDB有专门的线程来异步刷脏页，将flush链表的尾部的若干页和LRU链表的old区尾部的若干页刷到磁盘。若free链表没有可用的结点时，会从LRU链表尾部淘汰未被修改的页。若没有可淘汰的页，则会同步刷脏页到磁盘，此时会影响运行效率。
+
 如何提高Buffer Pool读写效率？
 
 **buffer pool多实例**：可以配置多个buffer pool实例，共享`innodb_buffer_pool_size`空间：
