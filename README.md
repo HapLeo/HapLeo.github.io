@@ -15,7 +15,7 @@
 
 [Buffer Pool](mysql/读书笔记/Buffer Pool.md)
 
-[Redo Log](mysql/读书笔记/Redo Log.md)
+[Redo Log](mysql/读书笔记/Redo_Log.md)
 
 ### 重点总结
 
