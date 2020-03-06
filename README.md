@@ -3,6 +3,8 @@
 
 ### 读书笔记
 
+[MySQL知识树](mysql/MySQL知识树.md)
+
 [MySQL基本配置](mysql/读书笔记/MySQL基本配置.md)
 
 [MySQL存储结构](mysql/读书笔记/MySQL存储结构.md)
