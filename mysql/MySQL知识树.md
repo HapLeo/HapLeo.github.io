@@ -64,11 +64,8 @@
 #### 锁保证隔离性原理
 
 - 脏写：一个事务修改了另一个事务未提交的数据为脏写，写操作加X锁后，其他事务阻塞写操作来避免脏写；
-
 - 脏读：一个事务读到了另一个事务未提交的数据为脏读，读操作加S锁，写操作加X锁，相互阻塞避免脏读；
-
-  	- 不可重复读：一个事务连续读两次，数据不一致，说明中间被其他事务修改过，读操作加S锁可阻塞其他事务写操作避免不可重复读；
-
+- 不可重复读：一个事务连续读两次，数据不一致，说明中间被其他事务修改过，读操作加S锁可阻塞其他事务写操作避免不可重复读；
   	- 幻读：一个事务读到其他事物新增且未提交的数据为幻读，加gap锁或next-key 锁可阻塞其他事物插入数据避免幻读(等值查询加gap锁，范围查询为范围内所有记录加next-key锁)；
 
 
@@ -80,7 +77,7 @@
         如下语句先取二级索引锁再取聚簇索引锁：
 
 ```sql
-// col_name_1 字段存在二级索引时，如下语句会先获取二级索引记录锁，再获取聚簇索引记录锁
+// col_name_1字段存在二级索引时，如下语句会先获取二级索引记录锁，再获取聚簇索引记录锁
 select * from table_name where col_name_1 = 'aaa' lock in share mode; 
 select * from table_name where col_name_1 = 'aaa' for update;
 update table_name set col_name_2 = 'bbb' where col_name_1 = 'aaa'; 
@@ -89,7 +86,7 @@ delete from table_name where col_name_1 = 'aaa';
 
 ​		如下语句先取聚簇索引锁再取二级索引锁：
 ```sql
-// pri_key 字段存在二级索引时，如下语句会先取聚簇索引锁再取二级索引锁
+// pri_key字段存在二级索引时，如下语句会先取聚簇索引锁再取二级索引锁
  select * from table_name where pri_key = 1 lock in share mode; 
  select * from table_name where pri_key = 1 for update;
  update table_name set col_name_1 = 'bbb' where pri_key = 1; 
