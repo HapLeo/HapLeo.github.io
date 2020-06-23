@@ -102,3 +102,12 @@ delete from table_name where col_name_1 = 'aaa';
 - `explain`：执行计划
 - `optimizer trace`: 优化跟踪
 
+### MySQL性能调优
+
+- 什么是MySQL性能调优？
+
+  MySQL性能调优通常分为两种：SQL语句调优和MySQL参数调优。
+
+  
+
+  https://blog.csdn.net/wang_kill/article/details/90512701
