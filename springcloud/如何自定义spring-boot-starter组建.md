@@ -111,4 +111,16 @@ mybatis.type-aliases-package=com.example.demo.model
 
 - **假如你出现了maven编译版本错误**：首先，修改IDEA的各个jdk版本配置，包括module版本、`settings->Build,Execution,Deployment->Java Compiler`. 其次，在pom.xml中指定properties属性来指定maven编译版本：
 
-  
+  ```xml
+  		<!-- 文件拷贝时的编码 -->
+  		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  		<!-- 编译时的编码 -->
+  		<maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+  		
+   		<java.version>1.8</java.version>
+  		<maven.compiler.source>1.8</maven.compiler.source>
+  		<maven.compiler.target>1.8</maven.compiler.target>
+  		<maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
+  	
+  ```
