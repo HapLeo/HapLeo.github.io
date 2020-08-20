@@ -24,13 +24,13 @@
 
 ​	在Spring经典的三层架构中，一个service调用另一个service的方法通常如下：
 
-![spring单体方法调用](image\spring单体方法调用.png)
+![spring单体方法调用](../images/spring单体方法调用.png)
 
 
 
 订单服务的实现类中调用用户接口的方法，同时用户接口拥有一个实现类。在Spring环境下运行时，会自动生成用户类的代理实现类，以处理事务、日志等功能。此时，所有的接口和类都存在于同一个JVM中，通过JVM指令来调用方法。
 
-![rpc远程方法调用](image/rpc远程方法调用.png)
+![rpc远程方法调用](../images/rpc远程方法调用.png)
 
 
 
@@ -56,7 +56,37 @@ RPC框架通常封装了TCP协议进行二进制数据的传输，当然也可�
 
 小任务：基于动态代理实现一个简易的RPC框架。
 
-![](https://raw.githubusercontent.com/HapLeo/HapLeo.github.io/master/images/1589982507237.jpg)
+![](../images/1589982507237.jpg)
+
+
+
+### 集群容错
+
+集群容错功能的四个核心类：服务目录-Directory、服务路由-Router、集群-Cluster、负载均衡-LoadBalance.
+
+#### Directory-服务目录
+
+该类为服务调用者提供服务提供者列表，而且列表中保存的是可以直接调用的**Invoker**对象。
+
+![img](..%5Cimages%5Cdirectory-inherit-hierarchy.png)
+
+AbstractDirectory是一个抽象类，它实现了Directory的`list(Invocation invocation)`方法来提供Invoker列表，但该方法内部调用了自己的抽象方法`doList(Invocation invocation)`并对结果进行处理，实际的提供列表数据的逻辑由子类实现：
+
+```java
+protected abstract List<Invoker<T>> doList(Invocation invocation) throws RpcException;
+```
+
+该方法由子类实现，用于提供目录列表，因此这是个典型的**模板方法设计模式**。
+
+**AbstractDirectory**有两个子类，**StaticDirectory**是静态目录，它所需要的信息来自于配置，并且一旦启动就不再改变。而**RegistryDirectory**则会随着注册中心中服务提供者的修改而动态修改。
+
+
+
+#### Router-服务路由
+
+服务路由包含一条路由规则，该规则决定了服务消费者可以调用哪些服务提供者。
+
+
 
 
 
