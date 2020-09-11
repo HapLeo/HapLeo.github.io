@@ -144,7 +144,9 @@ private T createProxy(Map<String, String> map) {
 
 #### 2.1 组装URL对象
 
-这个步骤比较简单，就是从各个配置类中收集配置参数，收集不到的就指定默认参数。配置类基本都是`ReferenceConfig`或其父类的属性。
+URL是Dubbo中的配置总线，保存着各种配置信息。
+
+组装URL，就是从各个配置类中收集配置参数，收集不到的就指定默认参数,并将这些参数赋值给URL的属性。
 
 文章开头通过API调用的过程，首先组装各个配置类。这里为了方便查看再次粘贴一下：
 
@@ -213,6 +215,53 @@ class URL implements Serializable {
 组装好url之后，协议对象就可以解析这个url从而创建invoker对象了。
 
 #### 2.2 创建invoker对象
+
+Invoker是执行器，用于执行业务逻辑，在服务引入过程中负责执行RPC调用。它由协议接口Protocol的实现类实例获取，url作为创建方法的入参。
+
+如下是Protocol获取invoker的源码片段：
+
+```java 
+//ReferenceConfig.java
+private T createProxy(Map<String, String> map) {
+    if (shouldJvmRefer(map)) {
+        URL url = new URL(LOCAL_PROTOCOL, LOCALHOST_VALUE, 0, interfaceClass.getName()).addParameters(map);
+        invoker = REF_PROTOCOL.refer(interfaceClass, url);
+    }
+}
+```
+
+可以看到，invoker对象是`REF_PROTOCOL.refer(interfaceClass, url)`方法返回的，`REF_PROTOCOL`是`Protocol`接口的一个实现类的实例，至于是哪个实现类，是通过Dubbo的**`SPI`机制** 确定的。关于`SPI机制`将会在另一篇文章中详细介绍。在这里，我们只要记住，invoker是通过协议获取的。
+
+协议接口的定义如下：
+
+```java
+// Protocol.java
+@SPI("dubbo")
+public interface Protocol {
+
+    int getDefaultPort();
+
+    // 服务导出
+    @Adaptive
+    <T> Exporter<T> export(Invoker<T> invoker) throws RpcException;
+
+    // 服务引入
+    @Adaptive
+    <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException;
+	
+    void destroy();
+}
+```
+
+在Dubbo中，Protocol接口有多个具体实现，其中典型的有：`DubboProtocol`和`RegistryProtocol`。
+
+`DubboProtocol`负责构建用于RPC调用的invoker，而`RegistryProtocol`负责构建用于与注册中心进行交互的invoker。
+
+当通过直连方式连接远程服务时，会直接通过`DubboProtocol`的实例获取invoker，而配置了注册中心的服务消费者会先通过`RegistryProtocol`进行 **服务订阅** ，执行成功后转换URL协议头到`dubbo://`(取决于你配置了哪种协议，默认dubbo协议)，再通过`RegistryProtocol`再次调用`Protocol.refer()`进行第二次的SPI，最终会调用`DubboProtocol`来构建负责RPC调用的invoker。
+
+
+
+
 
 
 
