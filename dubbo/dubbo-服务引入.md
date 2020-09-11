@@ -1,5 +1,7 @@
 # Dubbo-服务引入
 
+> 注：本篇文章分析的Dubbo版本为v2.7.3，其他版本总体逻辑基本一致，细微之处不进行分析。
+
 **服务引入** 是指服务消费者获取服务提供者的服务实例的过程。
 
 在本地调用时，例如在OrderServiceImpl中注入了IUserService接口的实现，可以看做是订单服务引入了用户服务。
@@ -75,7 +77,7 @@ private void init() {
 }
 ```
 
-由上面分析可知，`init()`方法做了两件事，一是收集配置信息到map中，二是调用`createProxy(map)`方法并将返回值赋值给`ServiceConfig`的`ref`属性。
+由上面分析可知，`init()`方法做了两件事，一是收集配置信息到map中，二是调用`createProxy(map)`方法并将返回值赋值给`ReferenceConfig`的`ref`属性。
 
 接下来要分析的`createProxy(map)`方法封装了上述 **服务引用** 过程的三个核心步骤：`组装url`、`创建Invoker`、`创建代理对象`。
 
@@ -121,12 +123,96 @@ private T createProxy(Map<String, String> map) {
 判断逻辑是用来区分用户希望如何引用服务：
 
 1. map中包含本地引用的信息，则创建一个新的URL对象并打上本地引用的协议头`injvm://`；
-2. 检查`ServiceConfig`对象的`url`属性，如果不为空，是用户主动指定了一个或多个url地址(多个地址用分号隔开)，说明用户不想从注册中心获取url列表，测试场景通常会使用这种方式。因此不再从注册中心获取url列表。将url(或列表)存入`ServiceConfig`对象的`urls`属性中。
+2. 检查`ReferenceConfig`对象的`url`属性，如果不为空，是用户主动指定了一个或多个url地址(多个地址用分号隔开)，说明用户不想从注册中心获取url列表，测试场景通常会使用这种方式。因此不再从注册中心获取url列表。将url(或列表)存入`ReferenceConfig`对象的`urls`属性中。
 3. 如果url为空，则从注册中心获取服务提供者的url列表，同样将整理好的url放入urls集合中。
 4. 如果urls集合内只有一个元素，通过Porotocol生成Invoker实例；否则，循环每一个url，通过Protocol生成Invokers实例列表，再使用CLUSTER将多个invoker实例融合成一个Invoker实例，这个实例具有集群的特性，即具有 **负载均衡** 和 **容错重试** 等集群功能。
 5. 最后通过代理工厂`ProxyFactory.getProxy(invoker)`方法返回代理对象。
 
-至此，服务引入的三部曲的梗概就分析完了。接下来我们跳出`ServiceConfig.java`进入到每一步中查看更深层的逻辑。
+至此，服务引入的三部曲的梗概就分析完了。接下来我们跳出`ReferenceConfig.java`进入到每一步中查看更深层的逻辑。
 
 ### 2. 深入细节
+
+由上面的分析可知，服务引入过程分为**三步**：
+
+**- 组装URL对象**；
+
+**- 创建invoker对象;**
+
+**- 返回服务代理类；**
+
+接下来我们逐步分析。
+
+#### 2.1 组装URL对象
+
+这个步骤比较简单，就是从各个配置类中收集配置参数，收集不到的就指定默认参数。配置类基本都是`ReferenceConfig`或其父类的属性。
+
+文章开头通过API调用的过程，首先组装各个配置类。这里为了方便查看再次粘贴一下：
+
+```java
+    public static void main(String[] args) throws InterruptedException {
+
+        // 应用配置
+        ApplicationConfig application = new ApplicationConfig();
+        application.setName("user-consumer");
+
+        // 注册中心配置
+        RegistryConfig registry = new RegistryConfig();
+        registry.setAddress("zookeeper://localhost:2180");
+
+        // 引用配置
+        ReferenceConfig<IUserService> reference = new ReferenceConfig<>();
+        reference.setApplication(application);
+        reference.setRegistry(registry);
+        reference.setInterface(IUserService.class);
+        reference.setVersion("1.0.0");
+
+        // 获取引用的服务
+        // get方法是关键方法，它是获取服务实现的入口
+        IUserService userService = reference.get();
+    }
+```
+
+而URL的组装过程就是从这些配置类中获取配置参数的。
+
+那么URL类的结构是什么样子呢？下面展示URL类的几个核心属性：
+
+```java
+// URL.java
+public /*final**/
+class URL implements Serializable {
+	
+    // 协议
+    private final String protocol;
+
+    // 用户名
+    private final String username;
+
+    // 密码
+    private final String password;
+
+    // 主机地址
+    private final String host;
+
+    // 端口号
+    private final int port;
+
+    // 路径
+    private final String path;
+
+    // 参数列表
+    private final Map<String, String> parameters;
+}
+```
+
+转换成字符串的格式：`protocol://username:password@host:port/path?key1=value1&key2=value2`
+
+其中`username`和`password`在特定场景下使用。一般的url示例如下：
+
+`dubbo://192.168.2.2:20880/org.apache.dubbo.demo.DemoService?application=dubbo-demo&dubbo=2.7.7&interface=org.apache.dubbo.demo.DemoService&methods=test&timestamp=158900014021`
+
+组装好url之后，协议对象就可以解析这个url从而创建invoker对象了。
+
+#### 2.2 创建invoker对象
+
+
 
