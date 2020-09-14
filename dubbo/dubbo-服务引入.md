@@ -451,7 +451,9 @@ private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type
 
 
 
+#### 2.3 创建代理对象
 
+代理对象是服务实现的代理，也就是说代理类与服务实现类实现自同一个接口，且实现了相同的方法。这里的代理类封装了Invoker实例，当调用服务的方法时，就会通过代理类调用Invoker的invoke方法。由于业务接口是dubbo框架的使用者定义的，因此框架层只能在运行时动态的生成它的代理类并创建对象。dubbo中提供了两种代理类的生成方式：`javassistProxyFactory`和`jdkProxyFactory`,这里不再分析。
 
 
 
