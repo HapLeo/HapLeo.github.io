@@ -12,7 +12,9 @@
 
 ### 1. 提纲挈领
 
-Dubbo的服务引入是从`ReferenceConfig.get()`开始的。无论使用Spring或者其他，最终都会通过调用`ReferenceConfig.get()`来执行服务引入。
+Dubbo的服务引入是从`ReferenceConfig.get()`开始的。无论使用Spring或者API进行初始化，最终都会通过调用`ReferenceConfig.get()`来执行服务引入。
+
+如下是通过API方式初始化的过程：
 
 ```java
     public static void main(String[] args) throws InterruptedException {
@@ -40,11 +42,13 @@ Dubbo的服务引入是从`ReferenceConfig.get()`开始的。无论使用Spring�
 
 **服务引入的核心是：创建服务接口的代理对象。**
 
-**服务引入总共分为三步：组装URL、生成Invoker、创建代理对象 这三个步骤，后一步依赖前一步的结果。**
+**服务引入总共分为三步：组装URL、生成Invoker、创建代理对象，后一步依赖前一步的结果。**
 
 - **组装URL：** 在Dubbo中，URL是配置总线，保存了所有需要的配置信息，并作为参数传递。 因此，服务引入的第一步便是收集配置信息并组装成URL。
 - **生成Invoker:** invoker是一个执行器实例，服务消费者的Invoker实例负责**执行远程调用**，由Protocol的实现类通过URL构建得到。这里的Protocol实现类则通过`自适应扩展机制`获取。
 - **创建代理对象：**通过`ProxyFactory.getProxy(invoker)`方法返回服务接口的代理实现对象。这一步是对invoker的封装，将Invoker伪装成Provider的服务实现，进而注入到Consumer中等待调用。
+
+具体过程如下：
 
 ```java
 // ReferenceConfig.java
