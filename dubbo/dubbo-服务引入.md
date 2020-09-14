@@ -263,6 +263,204 @@ public interface Protocol {
 
 当通过直连方式连接远程服务时，会直接通过`DubboProtocol`的实例获取invoker，而配置了注册中心的服务消费者会先通过`RegistryProtocol`进行 **服务订阅** ，执行成功后转换URL协议头到`dubbo://`(取决于你配置了哪种协议，默认dubbo协议)，再通过`RegistryProtocol`再次调用`Protocol.refer()`进行第二次的SPI，最终会调用`DubboProtocol`来构建负责RPC调用的invoker。
 
+下面我们分析`DubboProtocol`获取Invoker的源码：
+
+```java
+// AbstractProtocol.java
+// refer方法中调用protocolBindingRefer()方法，而该方法由子类实现。
+@Override
+    public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
+        return new AsyncToSyncInvoker<>(protocolBindingRefer(type, url));
+    }
+
+    protected abstract <T> Invoker<T> protocolBindingRefer(Class<T> type, URL url) throws RpcException;
+```
+
+下面是`DubboProtocol.java`中该方法的实现：
+
+```java
+// DubboProtocol.java
+@Override
+public <T> Invoker<T> protocolBindingRefer(Class<T> serviceType, URL url) throws RpcException {
+    optimizeSerialization(url);
+    // create rpc invoker.
+    DubboInvoker<T> invoker = new DubboInvoker<T>(serviceType, url, getClients(url), invokers);
+    invokers.add(invoker);
+    return invoker;
+}
+```
+
+这里逻辑比较简单，仅仅是创建了一个DubboInvoker对象并返回。这里构造方法的参数比较重要。`serviceType`就是想要引入的实例的接口名，`url`是携带各种配置信息的载体，`getClients()`方法则是根据`url`获取通信组件的客户端，Dubbo默认返回`Netty`的客户端。这里返回的是`ExchangeClient`数组，`ExchangeClient` 接口的实现类是具体的通信客户端的包装类。获取客户端的过程如下：
+
+```java
+// DubboProtocol.java
+private ExchangeClient[] getClients(URL url) {
+    // whether to share connection
+    boolean useShareConnect = false;
+    int connections = url.getParameter(CONNECTIONS_KEY, 0);
+    List<ReferenceCountExchangeClient> shareClients = null;
+    // if not configured, connection is shared, otherwise, one connection for one service
+    if (connections == 0) {
+        useShareConnect = true;
+        /**
+         * The xml configuration should have a higher priority than properties.
+         */
+        String shareConnectionsStr = url.getParameter(SHARE_CONNECTIONS_KEY, (String) null);
+        connections = Integer.parseInt(StringUtils.isBlank(shareConnectionsStr) ? ConfigUtils.getProperty(SHARE_CONNECTIONS_KEY,
+                DEFAULT_SHARE_CONNECTIONS) : shareConnectionsStr);
+        shareClients = getSharedClient(url, connections);
+    }
+    ExchangeClient[] clients = new ExchangeClient[connections];
+    for (int i = 0; i < clients.length; i++) {
+        if (useShareConnect) {
+            clients[i] = shareClients.get(i);
+        } else {
+            clients[i] = initClient(url);
+        }
+    }
+    return clients;
+}
+```
+
+根据url中是否配置了`connections`参数来判断是否共享连接，如果`connections==0`则共享连接，否则初始化指定数量的客户端并返回。
+
+获取共享连接的过程：
+
+```java
+// DubboProtocol.java
+private List<ReferenceCountExchangeClient> getSharedClient(URL url, int connectNum) {
+    String key = url.getAddress();
+    List<ReferenceCountExchangeClient> clients = referenceClientMap.get(key);
+    if (checkClientCanUse(clients)) {
+        batchClientRefIncr(clients);
+        return clients;
+    }
+    locks.putIfAbsent(key, new Object());
+    synchronized (locks.get(key)) {
+        clients = referenceClientMap.get(key);
+        // dubbo check
+        if (checkClientCanUse(clients)) {
+            batchClientRefIncr(clients);
+            return clients;
+        }
+        // connectNum must be greater than or equal to 1
+        connectNum = Math.max(connectNum, 1);
+        // If the clients is empty, then the first initialization is
+        if (CollectionUtils.isEmpty(clients)) {
+            clients = buildReferenceCountExchangeClientList(url, connectNum);
+            referenceClientMap.put(key, clients);
+        } else {
+            for (int i = 0; i < clients.size(); i++) {
+                ReferenceCountExchangeClient referenceCountExchangeClient = clients.get(i);
+                // If there is a client in the list that is no longer available, create a new one to replace him.
+                if (referenceCountExchangeClient == null || referenceCountExchangeClient.isClosed()) {
+                    clients.set(i, buildReferenceCountExchangeClient(url));
+                    continue;
+                }
+                referenceCountExchangeClient.incrementAndGetCount();
+            }
+        }
+        /**
+         * I understand that the purpose of the remove operation here is to avoid the expired url key
+         * always occupying this memory space.
+         */
+        locks.remove(key);
+        return clients;
+    }
+}
+```
+
+`getSharedClient`的逻辑是从缓存中获取与当前请求的**IP+端口**相同的客户端列表，如果这个列表为空，则通过`initClient()`创建并放进这个缓存中，然后返回。这里的`ReferenceCountExchangeClient`就是带有引用计数功能的`ExchangeClient`，记录了这个客户端被引用的次数。
+
+`buildReferenceCountExchangeClient()`这个方法内调用了`initClient(url)`方法，我们直接看这个方法是如何初始化一个客户端的。
+
+```java
+// DubboProtocol.java
+private ExchangeClient initClient(URL url) {
+    // client type setting.
+    String str = url.getParameter(CLIENT_KEY, url.getParameter(SERVER_KEY, DEFAULT_REMOTING_CLIENT));
+    url = url.addParameter(CODEC_KEY, DubboCodec.NAME);
+    // enable heartbeat by default
+    url = url.addParameterIfAbsent(HEARTBEAT_KEY, String.valueOf(DEFAULT_HEARTBEAT));
+    // BIO is not allowed since it has severe performance issue.
+    if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str)) {
+        throw new RpcException("Unsupported client type: " + str + "," +
+                " supported client type is " + StringUtils.join(ExtensionLoader.getExtensionLoader(Transporter.class).getSupportedExtensions(), " "));
+    }
+    ExchangeClient client;
+    try {
+        // connection should be lazy
+        if (url.getParameter(LAZY_CONNECT_KEY, false)) {
+            client = new LazyConnectExchangeClient(url, requestHandler);
+        } else {
+            client = Exchangers.connect(url, requestHandler);
+        }
+    } catch (RemotingException e) {
+        throw new RpcException("Fail to create remoting client for service(" + url + "): " + e.getMessage(), e);
+    }
+    return client;
+}
+```
+
+可以看到，通过` Exchangers.connect(url, requestHandler)`方法获取`client`实例。
+
+```java
+// HeaderExchanger.java
+@Override
+public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
+    return new HeaderExchangeClient(Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))), true);
+}
+
+// NettyTransporter.java
+@Override
+public Client connect(URL url, ChannelHandler listener) throws RemotingException {
+    return new NettyClient(url, listener);
+}
+```
+
+Dubbo通过SPI获取`HeaderExchanger`实例并调用`connect()`方法，该方法构造并返回一个`HeaderExchangeClient`实例，构造实例的过程中调用`Transporters.connect()`方法，而该方法通过SPI最终会调用通信框架的API创建通信客户端并返回。
+
+之所以在`Exhange`和`Transporter`中绕圈圈，是为了通过`SPI`来灵活的适配不同的通信框架，最终的目的就是为了获取到需要的通信框架客户端。
+
+由上面我们知道，`DubboProtocol`会创建一个具有远程调用功能的`invoker`实例，而`RegistryProtocol`的作用则是注册服务消费者、订阅providers、configurators、routers 等节点数据，并返回具有集群功能的Invoker。
+
+```java
+// RegistryProtocol.java
+private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
+    RegistryDirectory<T> directory = new RegistryDirectory<T>(type, url);
+    directory.setRegistry(registry);
+    directory.setProtocol(protocol);
+    // all attributes of REFER_KEY
+    Map<String, String> parameters = new HashMap<String, String>(directory.getUrl().getParameters());
+    URL subscribeUrl = new URL(CONSUMER_PROTOCOL, parameters.remove(REGISTER_IP_KEY), 0, type.getName(), parameters);
+    if (!ANY_VALUE.equals(url.getServiceInterface()) && url.getParameter(REGISTER_KEY, true)) {
+        // 注册服务消费者
+        directory.setRegisteredConsumerUrl(getRegisteredConsumerUrl(subscribeUrl, url));
+        registry.register(directory.getRegisteredConsumerUrl());
+    }
+    directory.buildRouterChain(subscribeUrl);
+    // 订阅服务提供者、配置、路由节点
+    directory.subscribe(subscribeUrl.addParameter(CATEGORY_KEY,
+            PROVIDERS_CATEGORY + "," + CONFIGURATORS_CATEGORY + "," + ROUTERS_CATEGORY));
+    Invoker invoker = cluster.join(directory);
+    ProviderConsumerRegTable.registerConsumer(invoker, url, subscribeUrl, directory);
+    // 返回Invoker
+    return invoker;
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
