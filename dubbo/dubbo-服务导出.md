@@ -51,7 +51,7 @@ protected synchronized void doExport() {
 // ServiceConfig.java
 // 仍然在ServiceConfig类中绕圈圈，
 //这个方法实现多注册中心多协议暴露服务的逻辑
-//首先获取了所有的注册中心地址，然后循环所有协议配置，通过doExportUrlsFor1Protocol(protocolConfig, registryURLs)方法将一个协议服务暴露到多个注册中心。
+//首先获取了所有的注册中心地址，然后循环所有协议配置，通过doExportUrlsFor1Protocol(protocolConfig, registryURLs)方法将一个协议服务导出到多个注册中心。
 	private void doExportUrls() {
         List<URL> registryURLs = loadRegistries(true);
         for (ProtocolConfig protocolConfig : protocols) {
@@ -454,3 +454,12 @@ public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingExce
 
 
 
+## 总结
+
+**服务导出** 有三种类型，根据url中的`scope` 可分为 `null-不导出`、`local-本地导出` 和 `remote-远程导出`。
+
+- **null字符串-不导出：** 什么都不用做；
+- **local-本地导出：** 供同一JVM下调用；
+- **remote-远程导出：** 开启网络服务并将接口暴露到注册中心。
+
+> 三中导出方式并不是互相冲突的关系。假如scope配置成`null字符串`,则不会导出服务，而如果没有配置，则会判断scope的值为空值`null`而不是字符串`null`，此时会同时导出到`local`和`remote`,以同时提供本地调用和远程调用。
