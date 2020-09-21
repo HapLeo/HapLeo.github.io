@@ -456,10 +456,67 @@ public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingExce
 
 ## 总结
 
-**服务导出** 有三种类型，根据url中的`scope` 可分为 `null-不导出`、`local-本地导出` 和 `remote-远程导出`。
+**服务导出** 有三种类型，根据url中的`scope` 可分为 `none-不导出`、`local-本地导出` 和 `remote-远程导出`。
 
-- **null字符串-不导出：** 什么都不用做；
-- **local-本地导出：** 供同一JVM下调用；
-- **remote-远程导出：** 开启网络服务并将接口暴露到注册中心。
+- **none - 不导出：** 什么都不做；
+- **local - 本地导出：** 供同一JVM下调用；
+- **remote - 远程导出：** 开启网络服务并将接口暴露到注册中心。
 
-> 三中导出方式并不是互相冲突的关系。假如scope配置成`null字符串`,则不会导出服务，而如果没有配置，则会判断scope的值为空值`null`而不是字符串`null`，此时会同时导出到`local`和`remote`,以同时提供本地调用和远程调用。
+> 三种导出方式并不是互相冲突的关系。假如scope配置成`none`,则不会导出服务，而如果没有配置，则会判断scope的值为空值`null`而不是字符串`none`，此时会同时导出到`local`和`remote`,以同时提供本地调用和远程调用,这也是默认的导出方式。
+
+那么，本地导出和远程导出的步骤有共通之处吗？当然。
+
+**导出过程大致分为三步：组装url，生成invoker，暴露协议。** 
+
+**组装url**:  将配置信息收集到url中并拼装成固定的url格式；
+
+**生成invoker**：代理工厂ProxyFactory以url作为参数生成Invoker实例；
+
+**暴露协议**：开启网络端口进行监听，并将服务注册到注册中心。
+
+
+
+### 什么是Invoker？
+
+Invoker是执行器，在服务提供端负责服务被调用时执行服务实现类的方法。Invoker中保存了服务的接口名、服务的实现类和服务的url。invoker实例由代理工厂`ProxyFactory`的实现类生成，Dubbo中默认的代理工厂是`JavassistProxyFactory`. 该类实现了`ProxyFactory.getInvoker(T proxy, Class<T> type, URL url)` 方法，当该方法被调用时，会通过生成java源代码、加载源代码、实例化 达到在运行时生成代理类的目的。每一个invoker实例就是一个代理类。
+
+举例说明，proxy参数为实现类`UserServiceImpl.java`, type参数为接口`IUserService.java`，url是配置项。
+
+接口中定义了list、delete、getById、addItem、editItem 五个方法。因此，代理工厂生成的代理类Invoker的核心方法的源码如下：
+
+```java
+public Object invokeMethod(Object o, String n, Class[] p, Object[] v) throws java.lang.reflect.InvocationTargetException {
+    top.hapleow.service.IUserService w;
+    try {
+        w = ((top.hapleow.service.IUserService) $1);
+    } catch (Throwable e) {
+        throw new IllegalArgumentException(e);
+    }
+    try {
+        if ("list".equals($2) && $3.length == 0) {
+            return ($w) w.list();
+        }
+        if ("delete".equals($2) && $3.length == 1) {
+            w.delete((java.lang.Long) $4[0]);
+            return null;
+        }
+        if ("getById".equals($2) && $3.length == 1) {
+            return ($w) w.getById((java.lang.Long) $4[0]);
+        }
+        if ("addItem".equals($2) && $3.length == 1) {
+            w.addItem((top.hapleow.model.User) $4[0]);
+            return null;
+        }
+        if ("editItem".equals($2) && $3.length == 1) {
+            w.editItem((top.hapleow.model.User) $4[0]);
+            return null;
+        }
+    } catch (Throwable e) {
+        throw new java.lang.reflect.InvocationTargetException(e);
+    }
+    throw new org.apache.dubbo.common.bytecode.NoSuchMethodException("Not found method \"" + $2 + "\" in class top.hapleow.service.IUserService.");
+}
+```
+
+
+
