@@ -3,9 +3,21 @@
 
 ### 读书笔记
 
-[MySQL知识树](mysql/MySQL知识树.md) [MySQL基本配置](mysql/读书笔记/MySQL基本配置.md) [MySQL存储结构](mysql/读书笔记/MySQL存储结构.md) [InnoDB索引](mysql/读书笔记/InnoDB索引.md)
+[MySQL知识树](mysql/MySQL知识树.md)
 
-[InnoDB表空间](mysql/读书笔记/InnoDB表空间.md) [optimizer_trace](mysql/读书笔记/optimizer_trace.md) [Buffer Pool](mysql/读书笔记/Buffer Pool.md) [Redo Log](mysql/读书笔记/Redo_Log.md)
+[MySQL基本配置](mysql/读书笔记/MySQL基本配置.md)
+
+[MySQL存储结构](mysql/读书笔记/MySQL存储结构.md)
+
+[InnoDB索引](mysql/读书笔记/InnoDB索引.md)
+
+[InnoDB表空间](mysql/读书笔记/InnoDB表空间.md)
+
+[optimizer_trace](mysql/读书笔记/optimizer_trace.md)
+
+[Buffer Pool](mysql/读书笔记/Buffer Pool.md)
+
+[Redo Log](mysql/读书笔记/Redo_Log.md)
 
 ### 重点总结
 
