@@ -1,6 +1,6 @@
 <html>
 <title>HapLeo&#39;s blog</title>
-<body background="images/ChMlWl6XziGISq35ACQbzzYOR7sAAOXKQG_nn8AJBvn045.jpg">
+<body style="background-image: images/ChMlWl6XziGISq35ACQbzzYOR7sAAOXKQG_nn8AJBvn045.jpg;width: auto">
 <h1>HapLeo&#39;s blog </h1>
 <h2>MySQL</h2>
 <h3>读书笔记</h3>
