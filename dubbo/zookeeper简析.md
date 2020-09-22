@@ -44,7 +44,6 @@ Observer 节点的作用是提高 zookeeper 集群读操作的吞吐量。因为
 
 当一个客户端实例与 Follower 或 Observer 建立长连接后，如果发送了写操作的请求，则该 zookeeper 节点会将写操作请求转发给 Leader 来执行。
 
-## 
 ## ZAB 协议
 
 **ZAB 协议(Zookeeper Atomic Broadcast)**，译为**Zookeeper 原子广播协议**。ZAB 协议分为两个部分：消息广播和崩溃恢复。
