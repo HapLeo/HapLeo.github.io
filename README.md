@@ -1,9 +1,9 @@
 <html>
 <title>HapLeo&#39;s blog</title>
-<body style="background-image: images/ChMlWl6XziGISq35ACQbzzYOR7sAAOXKQG_nn8AJBvn045.jpg;width: auto">
+<body>
 <h1>HapLeo&#39;s blog </h1>
 <h2>MySQL</h2>
-<h3>读书笔记</h3>
+<h3 style="background-color: brown" align="center">读书笔记</h3>
 <p><a href='mysql/MySQL知识树.md'>MySQL知识树</a></p>
 <p><a href='mysql/读书笔记/MySQL基本配置.md'>MySQL基本配置</a></p>
 <p><a href='mysql/读书笔记/MySQL存储结构.md'>MySQL存储结构</a></p>
