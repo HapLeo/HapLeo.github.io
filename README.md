@@ -1,3 +1,6 @@
+<html>
+<title>HapLeo&#39;s blog</title>
+<body background="images/ChMlWl6XziGISq35ACQbzzYOR7sAAOXKQG_nn8AJBvn045.jpg">
 <h1>HapLeo&#39;s blog </h1>
 <h2>MySQL</h2>
 <h3>读书笔记</h3>
@@ -69,3 +72,5 @@
 <p><a href='随笔/学习方向.md'>学习方向</a></p>
 <p><a href='linux/ubuntu装机指南.md'>ubuntu装机指南</a></p>
 <p><a href='redis/布隆过滤器简介.md'>布隆过滤器简介</a></p>
+</body>
+</html>
