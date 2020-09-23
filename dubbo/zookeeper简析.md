@@ -20,7 +20,10 @@ zookeeper 提供了一种树状结构来存储数据，这种结构类似于文�
 
 ## Watcher 监听
 
-zookeeper 的 ZNode 除了具有保存数据的功能外，还具有监听功能。当一个 ZNode 被客户端监听后，一旦这个 ZNode 发生了变化，zookeeper 就会通知所有监听该 ZNode 的客户端。这里所说的 ZNode 发生变化，包括删除、修改当前 ZNode 和新增、删除、修改这个 ZNode 的子 ZNode。需要注意的是，Watcher 是一次性的，如果需要继续监听则需要重新注册。
+zookeeper 的 ZNode 除了具有保存数据的功能外，还具有监听功能。
+当一个 ZNode 被客户端监听后，一旦这个 ZNode 发生了变化，zookeeper 就会通知所有监听该 ZNode 的客户端。
+这里所说的 ZNode 发生变化，包括新增、删除、修改当前 ZNode。也就是说，可以监听一个不存在的ZNode。
+需要注意的是，Watcher 是一次性的，如果需要继续监听则需要重新注册。
 
 ## 客户端
 
