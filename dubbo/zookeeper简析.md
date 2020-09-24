@@ -8,7 +8,7 @@
 
 ## 数据模型
 
-### ZNode 
+### ZNode
 
 zookeeper 提供了一种树状结构来存储数据，这种结构类似于文件系统的目录。树状结构的节点称为 ZNode。
 
@@ -49,11 +49,11 @@ Observer 节点的作用是提高 zookeeper 集群读操作的吞吐量。因为
 
 **ZAB 协议(Zookeeper Atomic Broadcast)**，译为**Zookeeper 原子广播协议**。ZAB 协议分为两个部分：消息广播和崩溃恢复。
 
-在讲消息广播和崩溃恢复之前，先讲一下 zxid。
+在消息广播和崩溃恢复的过程中，**zxid** 起到了关键的作用。
 
-**zxid 为全局唯一递增的事务 ID**，**是一个 64 位的值，高 32 位称为 epoch（纪元），低 32 位为自增计数器。每次重新选举后 epoch 加 1，自增计数器归零。**
+zxid 为全局唯一递增的事务 ID**，**是一个 64 位的值，高 32 位称为 epoch（纪元），低 32 位为自增计数器。每次Leader收到写请求，就会将zxid的低32位递增，并将新的zxid保存到proposal中。每次重新选举后新的Leader将 高32位递增，低32位归零。
 
-### 消息广播
+### 消息广播 
 
 在 zookeeper 中，Leader 节点负责整个集群的写请求和数据同步，由于该过程需要将写请求发送到每个 Follower 节点，因此被称作消息广播。
 
@@ -68,7 +68,7 @@ Observer 节点的作用是提高 zookeeper 集群读操作的吞吐量。因为
 
 zookeeper 的崩溃恢复指的是 Leader 宕机之后的选举过程。
 
-选举的原则是：
+选举的原则是，新Leader必须能保证：
 
 
 1. 原 Leader 已经 COMMIT 的 proposal 必须让所有 Follower 进行 COMMIT；
