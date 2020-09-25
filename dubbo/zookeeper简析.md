@@ -122,9 +122,25 @@ Curater中`LeaderSelector`类实现了这一功能，可以通过该类方便的
     
     Curator中的 `InterProcessReadWriteLock` 实现了这个逻辑。
     
+
 如果一个服务实例注册了锁之后宕机了该怎么办？没关系，这个实例一旦与zookeeper断开连接，它新增的临时节点就会被zookeeper清理，而监听该节点的服务将收到通知。
 
 ### 分布式计数器
 
 分布式计数器通常用于统计系统的在线人数，其实现原理是基于分布式锁来修改同一个节点的数据。Curator中`DistributedAtomicInteger`类实现了该功能。
 
+
+
+## 附录
+
+使用Curator配置监听：
+
+- Watcher一次性监听
+
+  watcher监听有三种方法：checkExist()方法、getData()方法和getChildren()方法，checkExist()可以监听节点的新增、删除，getData()可以监听节点值的变化，getChildren()方法可以监听子节点的变化。
+
+  
+
+- Listener递归监听
+
+  Listener递归监听有三种，分别是NodeCache、PathCache和TreeCache,他们分别用来监听指定节点、监听指定节点的子节点、监听指定节点和它的所有子节点。
