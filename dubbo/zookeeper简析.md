@@ -131,7 +131,7 @@ Curater中`LeaderSelector`类实现了这一功能，可以通过该类方便的
 
 
 
-## 附录
+## 使用Curator监听zookeeper
 
 使用Curator配置监听：
 
