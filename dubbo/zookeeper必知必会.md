@@ -8,7 +8,7 @@
 
 ## 数据模型 - ZNode
 
-zookeeper 提供了一种树状结构来存储数据，这种结构类似于文件系统的目录。树状结构的节点称为 ZNode。
+zookeeper 提供了一种树状结构来存储数据，这种结构类似于文件系统的目录。存储数据的单元叫做ZNode。
 
 **ZNode 有四种类型：临时节点、临时顺序节点、持久节点、持久顺序节点。**
 
@@ -98,13 +98,13 @@ Leader 收到各 Follower 的最大 zxid 和事务日志后，开始为每个 Fo
 
 ## 应用场景
 
-### Master选举
+### Master选举 - LeaderSelector
 
 在某些分布式场景中，某个业务只需要从多个服务实例中选出一个来执行，这个时候可以使用zookeeper的master选举功能实现。
 使用zookeeper进行master选举的核心原理是多个服务实例同时向zookeeper的某个节点下新增一个相同的节点，由于zookeeper只允许一个新增成功，因此新增成功的那个节点就可以被认定为master节点。
 Curater中`LeaderSelector`类实现了这一功能，可以通过该类方便的实现此业务。
 
-### 分布式锁
+### 分布式锁 - InterProcessLock/InterProcessReadWriteLock
 
 在分布式系统中，由于通常会部署多个相同的服务实例，在执行相同的业务逻辑时需要竞争同一个资源，这时就需要一个分布式锁来协调资源的分配问题。比如高并发下的减库存操作。
 
@@ -125,7 +125,7 @@ Curater中`LeaderSelector`类实现了这一功能，可以通过该类方便的
 
 如果一个服务实例注册了锁之后宕机了该怎么办？没关系，这个实例一旦与zookeeper断开连接，它新增的临时节点就会被zookeeper清理，而监听该节点的服务将收到通知。
 
-### 分布式计数器
+### 分布式计数器 - DistributedAtomicInteger
 
 分布式计数器通常用于统计系统的在线人数，其实现原理是基于分布式锁来修改同一个节点的数据。Curator中`DistributedAtomicInteger`类实现了该功能。
 
