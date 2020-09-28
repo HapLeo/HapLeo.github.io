@@ -105,7 +105,7 @@ client.getChildren().usingWatcher((CuratorWatcher) watchedEvent ->
 
 ## Listener - 持续监听
 
-### NodeCuratorListener
+### NodeCacheListener
 
 该类可以**监听指定节点和子节点的正删改操作**，但无法识别增删改类型。当注册监听器时，Curator自动为指定的节点和它的所有子节点（包括子节点的子节点等等）递归注册同样的监听。
 
@@ -123,6 +123,23 @@ curatorCache.start();
 curatorCache.listenable().removeListener(listener);
 // 结束的时候close，归还资源
  curatorCache.close();
+```
+
+
+
+### PathCacheListener 
+
+**只监听指定节点的子子孙孙节点的增删改操作，不监听指定的节点。**
+
+```java
+CuratorCache curatorCache curatorCache = CuratorCache.builder(client, path).build();
+CuratorCacheListener listener = CuratorCacheListener.builder().forPathCache(new PathCacheListener() {
+    @Override
+    public void nodeChanged() throws Exception {
+        System.out.println("nodeListener 监听到节点 " + path + "已变化。");
+    }
+}).build();
+curatorCache.listenable().addListener(listener);
 ```
 
 
