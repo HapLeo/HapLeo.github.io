@@ -105,41 +105,30 @@ client.getChildren().usingWatcher((CuratorWatcher) watchedEvent ->
 
 ## Listener - 持续监听
 
-### NodeCacheListener
+Listener的使用步骤分为两步：创建**CuratorCache**和**设置监听器**。
 
-该类可以**监听指定节点和子节点的正删改操作**，但无法识别增删改类型。当注册监听器时，Curator自动为指定的节点和它的所有子节点（包括子节点的子节点等等）递归注册同样的监听。
-
-```java
-CuratorCache curatorCache curatorCache = CuratorCache.builder(client, path).build();
-CuratorCacheListener listener = CuratorCacheListener.builder().forNodeCache(new NodeCacheListener() {
-    @Override
-    public void nodeChanged() throws Exception {
-        System.out.println("nodeListener 监听到节点 " + path + "已变化。");
-    }
-}).build();
-curatorCache.listenable().addListener(listener);
-curatorCache.start();
-// 移除这个监听器
-curatorCache.listenable().removeListener(listener);
-// 结束的时候close，归还资源
- curatorCache.close();
-```
-
-
-
-### PathCacheListener 
-
-**只监听指定节点的子子孙孙节点的增删改操作，不监听指定的节点。**
+CuratorCache是Curator用于缓存zookeeper服务器节点的类，当节点变化时，该缓存就会与zookeeper服务端不一致，Curator发现不一致之后就会调用监听器执行监听方法。
 
 ```java
-CuratorCache curatorCache curatorCache = CuratorCache.builder(client, path).build();
-CuratorCacheListener listener = CuratorCacheListener.builder().forPathCache(new PathCacheListener() {
-    @Override
-    public void nodeChanged() throws Exception {
-        System.out.println("nodeListener 监听到节点 " + path + "已变化。");
+// 官方示例
+// 监听节点的增删改，当前节点与子节点全都监听
+try (CuratorFramework client = CuratorFrameworkFactory.newClient("localhost:2181", new ExponentialBackoffRetry(1000, 3))) {
+    client.start();
+    try (CuratorCache cache = CuratorCache.build(client, "\\")) {
+        // there are several ways to set a listener on a CuratorCache. You can watch for individual events
+        // or for all events. Here, we'll use the builder to log individual cache actions
+        CuratorCacheListener listener = CuratorCacheListener.builder()
+                .forCreates(node -> System.out.println(String.format("Node created: [%s]", node)))
+                .forChanges((oldNode, node) -> System.out.println(String.format("Node changed. Old: [%s] New: [%s]", oldNode, node)))
+                .forDeletes(oldNode -> System.out.println(String.format("Node deleted. Old value: [%s]", oldNode)))
+                .forInitialized(() -> System.out.println("Cache initialized"))
+                .build();
+        // register the listener
+        cache.listenable().addListener(listener);
+        // the cache must be started
+        cache.start();
     }
-}).build();
-curatorCache.listenable().addListener(listener);
+}
 ```
 
 
