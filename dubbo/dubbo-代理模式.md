@@ -1,3 +1,9 @@
+**摘要** 
+
+1. 普通的代理模式通过手写代理类，使代理类与业务类实现统一接口且代理类持有业务类的方式实现代理。
+2. 普通的代理模式需要为不同的接口分别创建代理类，因此，相同的代理逻辑会创建大量重复的代理类，JDK动态代理动态生成代理类，使相同代理逻辑只写一次。
+3. JDK动态代理只能代理实现了接口的实现类，CGLib则通过生成业务类的子类来实现代理功能。这种方式的缺点是无法代理final类和final方法，因此，可以与JDK动态代理结合使用。
+
 代理模式是23种经典设计模式之一，也是框架中频繁使用的一种设计模式。
 
 代理模式是使用一个代理类来持有业务逻辑类，调用的时候不直接调用业务逻辑类而是调用代理类，通过代理类来间接调用业务逻辑类的方式，达到在业务逻辑方法调用前后方便的增加一些通用逻辑的目的。
@@ -89,4 +95,36 @@ public static void main(String[] args) throws Throwable {
         userServiceProxy.deleteById(2);
     }
 ```
+
+**CGLib**
+
+CGLib是一个字节码生成库，它允许我们在运行时对字节码进行修改和动态生成。
+
+CGLib通过为业务类生成子类的方式实现动态代理，因此无法对final类和final方法进行代理。 
+
+CGLib的核心类是`Enhancer`增强器 和 `MethodInterceptor`方法拦截器。利用这两个类就可以对一个业务类进行动态代理。示例如下：
+
+```java
+public static void main(String[] args) {
+    Enhancer enhancer = new Enhancer();
+    //设置业务类（需要被代理的类）
+    enhancer.setSuperclass(UserServiceImpl.class);
+    // 设置回调方法（代理逻辑）
+    enhancer.setCallback(new MethodInterceptor() {
+        @Override
+        public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+            System.out.println("前置处理...");
+            Object result = methodProxy.invokeSuper(o, objects);
+            System.out.println("后置处理...");
+            return result;
+        }
+    });
+    UserServiceImpl userService = (UserServiceImpl) enhancer.create();
+    userService.deleteById(1);
+}
+```
+
+**Javassist**
+
+Javasist是一个开源的Java字节码类库，可以简单、快速的生成或修改类。
 
