@@ -1,5 +1,52 @@
-# HapLeo's blog 
-## MySQL
+
+
+[TOC]
+
+# Dubbo
+
+## 服务导出
+
+### 组装URL
+
+### 生成Invoker
+
+### 生成代理服务
+
+## 服务引入
+
+### 组装URL
+
+### 生成Invoker
+
+### 开启网络服务并注册
+
+## SPI
+
+### JDK SPI
+### Dubbo SPI的优化
+  #### K-V 形式
+  #### Adaptive 自适应加载机制
+  #### Wrapper自动包装
+  #### 自动装配 
+
+## zookeeper
+
+### 作用
+### ZNode (CRUDW)
+### ZAB协议
+  #### 消息广播
+  #### 崩溃恢复
+### Curator
+### 使用场景
+
+## 动态代理
+
+#### 普通代理 (手写)
+#### JDK动态代理 (手写)
+#### CGLib (手写)
+#### Javassist (手写)
+
+# MySQL
 
 ### 读书笔记
 
@@ -27,7 +74,7 @@
 
 事务
 
-## Java
+# Java
 
 - 集合
 - 多线程
