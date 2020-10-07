@@ -1,6 +1,6 @@
 
 
-[TOC]
+
 
 # Dubbo
 
@@ -24,18 +24,19 @@
 
 ### JDK SPI
 ### Dubbo SPI的优化
-  #### K-V 形式
-  #### Adaptive 自适应加载机制
-  #### Wrapper自动包装
-  #### 自动装配 
+
+  - K-V 形式
+  - Adaptive 自适应加载机制
+  - Wrapper自动包装
+  - 自动装配 
 
 ## zookeeper
 
 ### 作用
 ### ZNode (CRUDW)
 ### ZAB协议
-  #### 消息广播
-  #### 崩溃恢复
+  - 消息广播
+  - 崩溃恢复
 ### Curator
 ### 使用场景
 
