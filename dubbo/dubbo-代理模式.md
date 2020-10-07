@@ -125,6 +125,10 @@ public static void main(String[] args) {
 ```
 
 **Javassist**
- 
-Javasist是一个开源的Java字节码类库，可以简单、快速的生成或修改类。
+
+Javassist是一个开源的Java字节码类库，可以简单、快速的生成或修改类。
+
+Javassist也是通过生成子类的方式实现代理。
+
+Javassist 实现代理相对于JDK动态代理和CGLib动态代理效率更高，节省了反射机制的开销。
 
