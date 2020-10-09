@@ -10,7 +10,7 @@ Dubbo是一款高性能Java RPC框架。
 
 **[服务导出](dubbo/dubbo-服务导出.md)：** 指服务提供者Provider开启网络服务并将URL注册到注册中心的过程。Dubbo默认的网络服务是Netty,默认的注册中心是[zookeeper](dubbo/dubbo-zookeeper.md)。服务导出的过程大致可以分为三个部分：组装URL、生成invoker和开启与注册服务。
 
-**[服务引入](dubbo/dubbo-服务引入.md)：** 指服务消费者Consumer从注册中心获取服务提供者的网络接口并封装成本地服务代理的过程。Dubbo默认使用[javassist](dubbo/dubbo-javassist.md)来实现代理工厂负责生产服务代理实例。
+**[服务引入](dubbo/dubbo-服务引入.md)：** 指服务消费者Consumer从注册中心获取服务提供者的网络接口并封装成本地服务代理的过程。Dubbo默认使用javassist来实现[动态代理](dubbo/dubbo-动态代理.md)负责生产服务代理实例,同时也支持JDK动态代理。
 
 
 

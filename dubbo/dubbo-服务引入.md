@@ -1,6 +1,8 @@
-# Dubbo-服务引入
+## Dubbo-服务引入
 
 > 注：本篇文章分析的Dubbo版本为v2.7.3，其他版本总体逻辑基本一致，细微之处不进行分析。
+
+### 1. 简介 
 
 **服务引入** 是指服务消费者获取服务提供者的服务实例的过程。
 
@@ -8,9 +10,17 @@
 
 在RPC框架中，由于服务之间跨进程，只能通过网络进行通信，因此订单服务引入用户服务时，引入的实际上是代理工厂创建的一个代理对象，而这个代理对象具有与用户服务远程通信的功能。
 
-## 源码分析
+**服务引入的核心是：创建服务接口的代理对象。**
 
-### 1. 提纲挈领
+**服务引入总共分为三步：组装URL、生成Invoker和创建代理对象。**
+
+- **组装URL：** 在Dubbo中，URL是配置总线，保存了所有需要的配置信息，并作为参数传递。 因此，服务引入的第一步便是收集配置信息并组装成URL。
+- **生成Invoker:** invoker是一个执行器实例，服务消费者的Invoker实例负责**执行远程调用**，由Protocol的实现类通过URL构建得到。这里的Protocol实现类则通过`自适应扩展机制`获取。如果有多个注册中心，多个服务提供者，这个时候会得到一组 Invoker 实例，此时需要通过集群管理类 Cluster 将多个 Invoker 合并成一个实例。
+- **创建代理对象：**通过`ProxyFactory.getProxy(invoker)`方法返回服务接口的代理实现对象。这一步是对invoker的封装，将Invoker伪装成Provider的服务实现，进而注入到Consumer中等待调用。
+
+> 需要注意的是，服务导出过程的invoker是由代理工厂创建的，而这里的服务引入的invoker则是通过Protocol获取的。
+
+### 2. 源码分析
 
 Dubbo的服务引入是从`ReferenceConfig.get()`开始的。无论使用Spring或者API进行初始化，最终都会通过调用`ReferenceConfig.get()`来执行服务引入。
 
@@ -39,14 +49,6 @@ Dubbo的服务引入是从`ReferenceConfig.get()`开始的。无论使用Spring�
         IUserService userService = reference.get();
     }
 ```
-
-**服务引入的核心是：创建服务接口的代理对象。**
-
-**服务引入总共分为三步：组装URL、生成Invoker、创建代理对象，后一步依赖前一步的结果。**
-
-- **组装URL：** 在Dubbo中，URL是配置总线，保存了所有需要的配置信息，并作为参数传递。 因此，服务引入的第一步便是收集配置信息并组装成URL。
-- **生成Invoker:** invoker是一个执行器实例，服务消费者的Invoker实例负责**执行远程调用**，由Protocol的实现类通过URL构建得到。这里的Protocol实现类则通过`自适应扩展机制`获取。
-- **创建代理对象：**通过`ProxyFactory.getProxy(invoker)`方法返回服务接口的代理实现对象。这一步是对invoker的封装，将Invoker伪装成Provider的服务实现，进而注入到Consumer中等待调用。
 
 具体过程如下：
 
@@ -134,7 +136,7 @@ private T createProxy(Map<String, String> map) {
 
 至此，服务引入的三部曲的梗概就分析完了。接下来我们跳出`ReferenceConfig.java`进入到每一步中查看更深层的逻辑。
 
-### 2. 深入细节
+### 3. 深入细节
 
 由上面的分析可知，服务引入过程分为**三步**：
 
@@ -146,7 +148,7 @@ private T createProxy(Map<String, String> map) {
 
 接下来我们逐步分析。
 
-#### 2.1 组装URL对象
+#### 3.1 组装URL对象
 
 URL是Dubbo中的配置总线，保存着各种配置信息。
 
@@ -218,7 +220,7 @@ class URL implements Serializable {
 
 组装好url之后，协议对象就可以解析这个url从而创建invoker对象了。
 
-#### 2.2 创建invoker对象
+#### 3.2 创建invoker对象
 
 Invoker是执行器，用于执行业务逻辑，在服务引入过程中负责执行RPC调用。它由协议接口Protocol的实现类实例获取，url作为创建方法的入参。
 
@@ -290,7 +292,8 @@ public <T> Invoker<T> protocolBindingRefer(Class<T> serviceType, URL url) throws
 }
 ```
 
-这里逻辑比较简单，仅仅是创建了一个DubboInvoker对象并返回。这里构造方法的参数比较重要。`serviceType`就是想要引入的实例的接口名，`url`是携带各种配置信息的载体，`getClients()`方法则是根据`url`获取通信组件的客户端，Dubbo默认返回`Netty`的客户端。这里返回的是`ExchangeClient`数组，`ExchangeClient` 接口的实现类是具体的通信客户端的包装类。获取客户端的过程如下：
+这里逻辑比较简单，仅仅是创建了一个DubboInvoker对象并返回。DubboInvoker持有了一个客户端，一旦发起了RPC调用，DubboInvoker就会通过持有的客户端对服务提供者进行网络请求。
+这里构造方法的参数比较重要。`serviceType`就是想要引入的实例的接口名，`url`是携带各种配置信息的载体，`getClients()`方法则是根据`url`获取通信组件的客户端，Dubbo默认返回`Netty`的客户端。这里返回的是`ExchangeClient`数组，`ExchangeClient` 接口的实现类是具体的通信客户端的包装类。获取客户端的过程如下：
 
 ```java
 // DubboProtocol.java
@@ -449,11 +452,36 @@ private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type
 }
 ```
 
+#### 3.3 创建代理对象
+
+代理对象是服务实现的代理，也就是说当发起RPC调用时，会调用代理类的方法。这里的代理类封装了Invoker实例，当调用服务的方法时，就会通过代理类调用Invoker的invoke方法,进行RPC的调用。dubbo中提供了两种代理类的生成方式：`javassistProxyFactory`和`jdkProxyFactory`,关于动态代理，将在 [动态代理](dubbo-动态代理.md) 这篇文章中介绍。
+
+从Dubbo官网拷贝的生成的代理对象的样子：
+
+```java
+public class proxy0 implements org.apache.dubbo.demo.DemoService {
+
+    public static java.lang.reflect.Method[] methods;
+
+    private java.lang.reflect.InvocationHandler handler;
+
+    public proxy0() {
+    }
+
+    public proxy0(java.lang.reflect.InvocationHandler arg0) {
+        handler = $1;
+    }
+
+    public java.lang.String sayHello(java.lang.String arg0) {
+        Object[] args = new Object[1];
+        args[0] = ($w) $1;
+        Object ret = handler.invoke(this, methods[0], args);
+        return (java.lang.String) ret;
+    }
+}
+```
 
 
-#### 2.3 创建代理对象
-
-代理对象是服务实现的代理，也就是说代理类与服务实现类实现自同一个接口，且实现了相同的方法。这里的代理类封装了Invoker实例，当调用服务的方法时，就会通过代理类调用Invoker的invoke方法。由于业务接口是dubbo框架的使用者定义的，因此框架层只能在运行时动态的生成它的代理类并创建对象。dubbo中提供了两种代理类的生成方式：`javassistProxyFactory`和`jdkProxyFactory`,这里不再分析。
 
 
 
