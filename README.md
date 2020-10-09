@@ -1,8 +1,8 @@
 # [Dubbo](dubbo/Dubbo.md)
 
-Dubbo是一款基于Java的高性能的分布式RPC框架。
+Dubbo是一款高性能Java RPC框架。
 
-分布式架构提供了互联网应用必须的高并发、高可用特性，而Dubbo作为分布式RPC框架提供了方便的远程方法调用、负载均衡、集群容错等功能。
+分布式架构提供了互联网应用必须的高并发、高可用特性，Dubbo作为RPC框架提供了方便的远程方法调用、负载均衡、集群容错等功能。
 
 **协议：**Dubbo默认使用自定义的dubbo协议，基于[Netty](dubbo/dubbo-netty入门.md)的NIO异步通讯，适合小数据量、大并发的服务调用,数据通过hessian进行二进制序列化。
 
