@@ -2,17 +2,21 @@
 
 
 
-# Dubbo
+# [Dubbo](dubbo/Dubbo.md)
 
-## [服务导出](dubbo/dubbo-服务导出.md)
+Dubbo是一款基于Java的高性能RPC框架。
 
-## [服务引入](dubbo/dubbo-服务引入.md)
+Dubbo解决了单机环境的单点故障问题、资源扩展问题，提供了方便的远程方法调用的功能。
 
-## [SPI](dubbo/dubbo-SPI.md)
+**协议：**Dubbo默认使用自定义的dubbo协议，基于[Netty](dubbo/dubbo-netty入门.md)的NIO异步通讯，适合小数据量、大并发的服务调用,数据通过hessian进行二进制序列化。
 
-## [zookeeper](dubbo/dubbo-zookeeper.md)
+**[SPI](dubbo/dubbo-SPI.md)：** Dubbo采用插件化设计，通过SPI机制动态调整服务的实现。Dubbo的SPI对JDK的SPI进行了增强，包括通过key加载指定的服务实现，Wrapper自动包装、自动依赖注入以及Adaptive自适应加载机制。
 
-## [代理模式](dubbo/dubbo-代理模式.md)
+**[服务导出](dubbo/dubbo-服务导出.md)：** 指服务提供者Provider开启网络服务并将URL注册到注册中心的过程。Dubbo默认的网络服务是Netty,默认的注册中心是[zookeeper](dubbo/dubbo-zookeeper.md)。
+
+**[服务引入](dubbo/dubbo-服务引入.md)：** 指服务消费者者Consumer从注册中心获取服务提供者的网络接口并封装成本地服务代理的过程。Dubbo默认使用[javassist](dubbo/dubbo-javassist.md)来实现代理工厂负责生产服务代理实例。
+
+
 
 # MySQL
 
