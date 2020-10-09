@@ -1,7 +1,3 @@
-
-
-
-
 # [Dubbo](dubbo/Dubbo.md)
 
 Dubbo是一款基于Java的高性能RPC框架。
