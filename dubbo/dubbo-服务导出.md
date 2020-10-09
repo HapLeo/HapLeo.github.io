@@ -157,6 +157,8 @@ ServiceConfig中的暴露逻辑就分析完了，在该类中，主要做了如�
 
 如果指定了注册中心地址，则Invoker中保存的url的协议头是`registry://`, 依次执行`ProtocolFilterWrapper.export(Invoker invoker)`,`ProtocolListenerWrapper.export(Invoker invoker)`，`QosProtocolWrapper.export(Invoker invoker)`,最终执行到`RegistryProtocol.export(Invoker invoker)`。`RegistryProtocol.export(Invoker invoker)`方法真正的调用了**服务开启**和**服务注册**两个方法。
 
+#### 2.2 开启与注册服务
+
 ```java
 // RegistryProtocol.java 
 // 配置了注册中心时，会使用这个Protocol来执行服务开启和服务注册程序
@@ -470,7 +472,7 @@ public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingExce
 
 > 三种导出方式并不是互相冲突的关系。假如scope配置成`none`,则不会导出服务，而如果没有配置，则会判断scope的值为空值`null`而不是字符串`none`，此时会同时导出到`local`和`remote`,以同时提供本地调用和远程调用,这也是默认的导出方式。
 
-### 什么是Invoker？
+### 3. 什么是Invoker？
 
 Invoker是执行器，在服务提供端负责服务被调用时执行服务实现类的方法。Invoker中保存了服务的接口名、服务的实现类和服务的url。invoker实例由代理工厂`ProxyFactory`的实现类生成，Dubbo中默认的代理工厂是`JavassistProxyFactory`. 该类实现了`ProxyFactory.getInvoker(T proxy, Class<T> type, URL url)` 方法，当该方法被调用时，会通过生成java源代码、加载源代码、实例化 达到在运行时生成代理类的目的。每一个invoker实例就是一个代理类。
 
