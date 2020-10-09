@@ -8,9 +8,9 @@ Dubbo是一款高性能Java RPC框架。
 
 **[SPI](dubbo/dubbo-SPI.md)：** Dubbo采用插件化设计，通过SPI机制动态调整服务的实现。Dubbo的SPI对JDK的SPI进行了增强，包括通过key加载指定的服务实现，Wrapper自动包装、自动依赖注入以及Adaptive自适应加载机制。
 
-**[服务导出](dubbo/dubbo-服务导出.md)：** 指服务提供者Provider开启网络服务并将URL注册到注册中心的过程。Dubbo默认的网络服务是Netty,默认的注册中心是[zookeeper](dubbo/dubbo-zookeeper.md)。
+**[服务导出](dubbo/dubbo-服务导出.md)：** 指服务提供者Provider开启网络服务并将URL注册到注册中心的过程。Dubbo默认的网络服务是Netty,默认的注册中心是[zookeeper](dubbo/dubbo-zookeeper.md)。服务导出的过程大致可以分为三个部分：组装URL、生成invoker和开启与注册服务。
 
-**[服务引入](dubbo/dubbo-服务引入.md)：** 指服务消费者者Consumer从注册中心获取服务提供者的网络接口并封装成本地服务代理的过程。Dubbo默认使用[javassist](dubbo/dubbo-javassist.md)来实现代理工厂负责生产服务代理实例。
+**[服务引入](dubbo/dubbo-服务引入.md)：** 指服务消费者Consumer从注册中心获取服务提供者的网络接口并封装成本地服务代理的过程。Dubbo默认使用[javassist](dubbo/dubbo-javassist.md)来实现代理工厂负责生产服务代理实例。
 
 
 
