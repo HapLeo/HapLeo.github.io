@@ -1,4 +1,4 @@
-# Dubbo 学习笔记
+# Dubbo 简介
 
 ## 引言
 
@@ -120,41 +120,17 @@ public final class URL implements Serializable {
 
 此外，dubbo-common包下提供了两个工具类：`URLBuilder`用于构造URL对象，`URLParser`用于将字符串URL解析成对象URL.
 
+在Dubbo中，RPC的过程可以通过dubbo协议，也可以通过http协议，他们分属于不同的实现包中，相当于两个插件。dubbo的核心api在发起调用的时候应该使用哪种协议呢？它会通过解析URL获得配置文件中的协议名称，然后通过Dubbo的SPI机制查找到具体的实现类并创建实例对象，从而实现RPC调用逻辑。因此，多个协议实现包并不会引起冲突。
+
 **应用场景**
 
 - SPI中通过protocol确定RegistryFacotry的具体实现；
-
-
 
 > Q: 讲一讲Dubbo中的URL? 
 >
 > K: 配置总线，格式，使用举例。
 >
 > A: 在Dubbo中，URL是贯穿整个框架核心的配置总线，它用来传递调用过程所需要的配置数据。它的格式为：`protocol://username:password@host:port/path?key1=value1&key2=value2`,url中包含了本次调用的协议、接口、方法名、传值、时间戳等。应用方面，比如dubbo通过协议名称来决定通过SPI加载哪一个协议的实现。
-
-
-
-### SPI —— Service Provider Interface
-
-OCP原则：对扩展开放，对修改封闭。
-
-dubbo采用 **微内核+插件架构**，面向功能拆分，可扩展架构。内核负责管理插件的生命周期，不会因为系统功能变化而变化。所有功能实现都通过插件提供。
-
-**思考：**为什么框架需要使用SPI机制？
-
-**举例说明：** JDK提供了java.sql.Driver接口，该接口为不同的数据库厂商提供了统一的连接规范。每个数据库厂商提供这个接口的实现就可以连接不同的数据库。现在，我要写一个工具类，来实现一些自动查询的功能。要实现查询功能，是需要Driver的实例对象的，那么我应该如何获取Driver接口的实例对象呢？答案是由各个厂商的驱动包来提供。那么，当我引入myql的驱动包`jdbc-mysql-connector-*.jar`后，如何才能让我的工具类获取到mysql的Driver实例呢？在mysql的驱动包中，有一个文件夹`META-INF/services`,这个文件夹中保存了mysql厂商提供的Driver具体实现类的名称。我的工具要想使用到具体的Driver实例，只需要扫描这个文件夹，获取到相应的实现类名，就可以通过类加载器把该类加载进来并通过反射实例化对象出来。这样一来，不管是mysql还是Oracle，只要在它的驱动包里的这个目录下放入实现类名称，我的工具类就可以获取到它的实例对象并进行下一步调用了。这就是SPI的插件机制。
-
-Dubbo没有完全采用JDK的SPI机制，而是对它做了增强。
-
-在Dubbo中，RPC的过程可以通过dubbo协议，也可以通过http协议，他们分属于不同的实现包中，相当于两个插件。dubbo的核心api在发起调用的时候应该使用哪种协议呢？它会通过解析URL获得配置文件中的协议名称，然后通过Dubbo的SPI机制查找到具体的实现类并创建实例对象，从而实现RPC调用逻辑。因此，多个协议实现包并不会引起冲突。
-
-**因此，SPI是一种通知机制，用于下层实现通知上层接口它的实现类的位置。**
-
-> Q: 什么是SPI机制，dubbo是如何实现SPI的？
->
-> K: 插件机制，JDK中的ServiceLoader,Dubbo中的
->
-> A：SPI是一种插件机制，将接口与实现解耦，从而可以动态更改功能的实现。JDK的SPI通过在实现类的包中`META-INF\services`目录下存放文件，通用接口通过ServiceLoader加载指定的类来获取的实例。Dubbo对SPI机制进行了增强，通过关键字在运行时读取`META-INF\dubbo`目录下文件来加载指定的实现类。Dubbo中在一次调用中使用哪种协议、哪种负载均衡策略等都是通过Dubbo的SPI机制加载。
 
 
 

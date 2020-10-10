@@ -1,12 +1,22 @@
-## Dubbo-服务提供者的初始化过程
+## Dubbo-服务导出：服务提供者的初始化过程
 
-服务提供者的初始化过程，从ServiceConfig.export() 开始。
+### 1. 简介
 
-ServiceConfig保存了服务提供者的协议信息、URL、服务接口名、服务类、服务方法、该服务是否已被暴露等。
+服务导出指服务提供者Provider开启网络服务并将URL注册到注册中心的过程。这个过程大致分为三个部分：**组装URL**、**生成invoker**、**开启服务与注册服务**。
 
-export的含义有两个，一是开启网络接口服务以接收远程调用请求，二是将接口URL暴露到注册中心。
+**组装URL：** URL是Dubbo的配置总线，配置信息通过URL在各模块间传递。Dubbo在服务导出时，首先从ApplicationConfig、ProviderConfig、RegistryConfig等配置类中收集服务导出所需要的配置信息，用于后续的方法调用。
 
-以下逐步分析这两个过程。
+**生成invoker：** invoker是业务逻辑的代理对象，Dubbo中通过Javassist类库来生成代理类，并通过Wrapper进行自动包装。
+
+**开启服务与注册服务：**Dubbo通过读取URL中的协议信息，开启相应的服务，默认使用dubbo协议，启动netty开启网络服务用于接收网络请求，Dubbo支持多协议的服务导出。在开启服务后，向注册中心注册服务地址，Dubbo默认使用zookeeper作为注册中心，且支持多注册中心的服务注册。
+
+### 2. 源码分析
+
+服务提供者的初始化过程，从`ServiceConfig.export()` 开始。
+
+#### 2.1 组装URL
+
+`ServiceConfig`保存了服务提供者的协议信息、URL、服务接口名、服务类、服务方法、该服务是否已被暴露等信息。在`ServiceConfig`类中，首先检查这些配置是否符合要求。
 
 ```java
 // ServiceConfig.java
@@ -63,7 +73,7 @@ protected synchronized void doExport() {
     }
 ```
 
-接下来看doExportUrlsFor1Protocol这个方法，该方法的核心逻辑是将服务的某一个协议URL暴露到所有注册中心。此方法源码非常复杂，这里就不贴源码了，只摘出核心逻辑进行分析。
+接下来看doExportUrlsFor1Protocol这个方法，该方法的核心逻辑是将服务的某一个协议URL暴露到所有注册中心，这个方法包含了开启服务和注册服务两个步骤。此方法源码非常复杂，这里就不贴源码了，只摘出核心逻辑进行分析。
 
 ```java
 // 还是在ServiceConfig.java类中
@@ -139,13 +149,15 @@ ServiceConfig中的暴露逻辑就分析完了，在该类中，主要做了如�
 
 2. 多注册中心多协议暴露逻辑，即放在两个方法中的两个循环。
 
-3. 拼接URL对象，获取invoker对象。
+3. 拼接URL对象，生成invoker对象。
 
 4. 将invoker传给protocol进行协议层的export操作。
 
    这里要提醒的是，在dubbo中，URL是配置信息的核心，Invoker是执行逻辑的核心。Invoker的抽象实现类AbstractInvoker中保存了URL属性，也就保存了方法调用的所有相关配置信息。
 
-如果指定了注册中心地址，则Invoker中保存的url的协议头是“registry://”,一次执行`ProtocolFilterWrapper.export(Invoker invoker)`,`ProtocolListenerWrapper.export(Invoker invoker)`，`QosProtocolWrapper.export(Invoker invoker)`,最终执行到`RegistryProtocol.export(Invoker invoker)`。`RegistryProtocol.export(Invoker invoker)`方法真正的调用了**服务开启**和**服务注册**两个方法。
+如果指定了注册中心地址，则Invoker中保存的url的协议头是`registry://`, 依次执行`ProtocolFilterWrapper.export(Invoker invoker)`,`ProtocolListenerWrapper.export(Invoker invoker)`，`QosProtocolWrapper.export(Invoker invoker)`,最终执行到`RegistryProtocol.export(Invoker invoker)`。`RegistryProtocol.export(Invoker invoker)`方法真正的调用了**服务开启**和**服务注册**两个方法。
+
+#### 2.2 开启与注册服务
 
 ```java
 // RegistryProtocol.java 
@@ -450,11 +462,7 @@ public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingExce
 
 1. 组装各种配置信息，组成URL，将URL传递给代理工厂生成Invocker对象。
 2. 获取相应的实现类`InjvmProtocol.java`,将服务导出到本地。
-3. 判断是否制定注册中心，如果没指定，直接通过DubboProtocol开启服务；如果指定了注册中心，则先通过DubboProtocol开启服务，再通过RegistryProtocol进行服务注册。
-
-
-
-## 总结
+3. 判断是否指定了注册中心，如果没指定，直接通过DubboProtocol开启服务；如果指定了注册中心，则先通过DubboProtocol开启服务，再通过RegistryProtocol进行服务注册。
 
 **服务导出** 有三种类型，根据url中的`scope` 可分为 `none-不导出`、`local-本地导出` 和 `remote-远程导出`。
 
@@ -464,23 +472,11 @@ public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingExce
 
 > 三种导出方式并不是互相冲突的关系。假如scope配置成`none`,则不会导出服务，而如果没有配置，则会判断scope的值为空值`null`而不是字符串`none`，此时会同时导出到`local`和`remote`,以同时提供本地调用和远程调用,这也是默认的导出方式。
 
-那么，本地导出和远程导出的步骤有共通之处吗？当然。
-
-**导出过程大致分为三步：组装url，生成invoker，暴露协议。** 
-
-**组装url**:  将配置信息收集到url中并拼装成固定的url格式；
-
-**生成invoker**：代理工厂ProxyFactory以url作为参数生成Invoker实例；
-
-**暴露协议**：开启网络端口进行监听，并将服务注册到注册中心。
-
-
-
-### 什么是Invoker？
+### 3. 什么是Invoker？
 
 Invoker是执行器，在服务提供端负责服务被调用时执行服务实现类的方法。Invoker中保存了服务的接口名、服务的实现类和服务的url。invoker实例由代理工厂`ProxyFactory`的实现类生成，Dubbo中默认的代理工厂是`JavassistProxyFactory`. 该类实现了`ProxyFactory.getInvoker(T proxy, Class<T> type, URL url)` 方法，当该方法被调用时，会通过生成java源代码、加载源代码、实例化 达到在运行时生成代理类的目的。每一个invoker实例就是一个代理类。
 
-举例说明，proxy参数为实现类`UserServiceImpl.java`, type参数为接口`IUserService.java`，url是配置项。
+举例说明，proxy参数为实现类`UserServiceImpl.java`, type参数为接口`IUserService.java`，url是配置项，保存在抽象类`AbstractInvoker`中。
 
 接口中定义了list、delete、getById、addItem、editItem 五个方法。因此，代理工厂生成的代理类Invoker的核心方法的源码如下：
 
@@ -518,5 +514,7 @@ public Object invokeMethod(Object o, String n, Class[] p, Object[] v) throws jav
 }
 ```
 
+invoker实例在`Protocol.export()`方法被调用时作为参数传入，一来可以携带URL到协议层，二来在服务导出成功后会返回Exporter实例，这个实例会保存这个invoker实例，在后续远程调用的过程中使用。
 
+我们回头看一下，invoker的生成时机是`doExportUrlsFor1Protocol()`方法的for循环中，也就是说针对每个注册中心和每个协议，都会生成一个invoker实例，也就是说，不同的注册中心、不同的协议发起的RPC调用的逻辑并不一定相同。
 

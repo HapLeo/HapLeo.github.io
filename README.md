@@ -1,18 +1,18 @@
+# [Dubbo](dubbo/Dubbo.md)
+
+Dubbo是一款高性能Java RPC框架。
+
+分布式架构提供了互联网应用必须的高并发、高可用特性，Dubbo作为RPC框架提供了方便的远程方法调用、负载均衡、集群容错等功能。
+
+**协议：**Dubbo默认使用自定义的dubbo协议，基于[Netty](dubbo/dubbo-netty入门.md)的NIO异步通讯，适合小数据量、大并发的服务调用,数据通过hessian进行二进制序列化。
+
+**[SPI](dubbo/dubbo-SPI.md)：** Dubbo采用插件化设计，通过SPI机制动态调整服务的实现。Dubbo的SPI对JDK的SPI进行了增强，包括通过key加载指定的服务实现，Wrapper自动包装、自动依赖注入以及Adaptive自适应加载机制。
+
+**[服务导出](dubbo/dubbo-服务导出.md)：** 指服务提供者Provider开启网络服务并将URL注册到注册中心的过程。Dubbo默认的网络服务是Netty,默认的注册中心是[zookeeper](dubbo/dubbo-zookeeper.md)。服务导出的过程大致可以分为三个部分：组装URL、生成invoker和开启与注册服务。
+
+**[服务引入](dubbo/dubbo-服务引入.md)：** 指服务消费者Consumer从注册中心获取服务提供者的网络接口并封装成本地服务代理的过程。服务引入的过程大致可以分为三个部分：组装URL、生成invoker和创建代理对象。Dubbo默认使用javassist来实现[动态代理](dubbo/dubbo-动态代理.md)负责生产服务代理实例,同时也支持JDK动态代理。
 
 
-
-
-# Dubbo
-
-## [服务导出](dubbo/dubbo-服务导出.md)
-
-## [服务引入](dubbo/dubbo-服务引入.md)
-
-## [SPI](dubbo/dubbo-SPI.md)
-
-## [zookeeper](dubbo/dubbo-zookeeper.md)
-
-## [代理模式](dubbo/dubbo-代理模式.md)
 
 # MySQL
 
