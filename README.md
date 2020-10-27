@@ -97,3 +97,7 @@ Dubbo是一款高性能Java RPC框架。
 [ubuntu装机指南](linux/ubuntu装机指南.md)
 
 [布隆过滤器简介](redis/布隆过滤器简介.md)
+
+## 生活
+
+[饮食安排](生活/饮食安排.md)
