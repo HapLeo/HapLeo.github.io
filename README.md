@@ -17,6 +17,9 @@ Dubbo是一款高性能Java RPC框架。
 # 待归档
 [Curator使用手册](dubbo/Curator使用手册.md)
 
+[kafka](kafka/kafka_index.html)
+
+
 
 
 # MySQL
