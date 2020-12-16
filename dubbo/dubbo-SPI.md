@@ -20,11 +20,11 @@ Dubbo没有完全采用JDK的SPI机制，而是对它做了增强。
 
 > Q: 什么是SPI机制，dubbo是如何实现SPI的？
 >
-> K: 插件机制，JDK中的ServiceLoader,Dubbo中的
+> K: 插件机制，JDK中的ServiceLoader,Dubbo中的ExtensionLoader
 >
 > A：SPI是一种插件机制，将接口与实现解耦，从而可以动态更改功能的实现。JDK的SPI通过在实现类的包中`META-INF\services`目录下存放文件，通用接口通过ServiceLoader加载指定的类来获取的实例。Dubbo对SPI机制进行了增强，通过关键字在运行时读取`META-INF\dubbo`目录下文件来加载指定的实现类。Dubbo中在一次调用中使用哪种协议、哪种负载均衡策略等都是通过Dubbo的SPI机制加载。
 
-Java中的SPI是通过`ServiceLoader`类的`load`方法对`META-INF\services`目录进行扫描，获取该目录下的文件。这些文件的文件名是服务的接口名，文件的内容则是接口实现类的类名列表。ServiceLoader获取这些实现类的类名后就会自动创建这些类的对象。通过这种方法，我们可以通过配置文件来动态指定某个服务使用哪个具体的实现。
+Java中的SPI是通过`ServiceLoader`类的`load`方法对`META-INF\services`目录进行扫描，获取该目录下的文件。这些文件的文件名是服务的接口名，文件的内容则是接口实现类的类名列表。ServiceLoader获取这些实现类的类名后就会自动创建这些类的对象。通过这种方法，我们可以通过配置文件来动态指定某个服务使用哪个具体的实现类。
 
 这里粘贴Dubbo官网的示例来演示：
 

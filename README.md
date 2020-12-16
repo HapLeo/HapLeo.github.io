@@ -12,6 +12,14 @@ Dubbo是一款高性能Java RPC框架。
 
 **[服务引入](dubbo/dubbo-服务引入.md)：** 指服务消费者Consumer从注册中心获取服务提供者的网络接口并封装成本地服务代理的过程。服务引入的过程大致可以分为三个部分：组装URL、生成invoker和创建代理对象。Dubbo默认使用javassist来实现[动态代理](dubbo/dubbo-动态代理.md)负责生产服务代理实例,同时也支持JDK动态代理。
 
+**[服务目录](dubbo/dubbo-服务目录.md)：** 指服务消费者Consumer用于维护服务提供者代理类invoker的业务逻辑。服务目录有两个实现类 `StaticDirectory`和`RegistryDirectory`,他们都持有`List<Invoker> list` 列表，不同的是`StaticDirectory`实例化之后就不再变化，而`RegistryDirectory`则会根据注册中心的变化而动态更新`invokers`列表。
+
+# 待归档
+[Curator使用手册](dubbo/Curator使用手册.md)
+
+[kafka](kafka/kafka_index.html)
+
+
 
 
 # MySQL
@@ -92,3 +100,7 @@ Dubbo是一款高性能Java RPC框架。
 [ubuntu装机指南](linux/ubuntu装机指南.md)
 
 [布隆过滤器简介](redis/布隆过滤器简介.md)
+
+## 生活
+
+[饮食安排](生活/饮食安排.md)
