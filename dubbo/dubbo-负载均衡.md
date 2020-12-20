@@ -8,3 +8,10 @@
 
 ## 负载均衡策略
 
+Dubbo中提供了四种负载均衡策略：
+
+- RandomLoadBalance: 基于权重随机算法
+- LeastActiveLoadBalance:基于最少活跃调用数算法
+- ConsistentHashLoadBalance:基于一致性哈希算法
+- RoundRobinLoadBalance:基于加权轮询算法
+
