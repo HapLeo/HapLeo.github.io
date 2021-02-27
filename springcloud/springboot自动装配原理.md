@@ -20,8 +20,7 @@
 
 如下是pom.xml中引入的starter：
 
-```java
-</properties>
+```xml
 <dependencies>
     <dependency>
         <groupId>org.springframework.boot</groupId>
