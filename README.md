@@ -14,6 +14,11 @@ Dubbo是一款高性能Java RPC框架。
 
 **[服务目录](dubbo/dubbo-服务目录.md)：** 指服务消费者Consumer用于维护服务提供者代理类invoker的业务逻辑。服务目录有两个实现类 `StaticDirectory`和`RegistryDirectory`,他们都持有`List<Invoker> list` 列表，不同的是`StaticDirectory`实例化之后就不再变化，而`RegistryDirectory`则会根据注册中心的变化而动态更新`invokers`列表。
 
+# SpringCloud
+
+- [springboot自动装配原理](./springcloud/springboot自动装配原理.md)
+- [如何自定义spring-boot-starter组建](./springcloud/如何自定义spring-boot-starter组建.md)
+
 # 待归档
 [Curator使用手册](dubbo/Curator使用手册.md)
 
