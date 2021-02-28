@@ -1,8 +1,10 @@
 # SpringBoot自动装配原理
 
+![微信图片_20210227212653](../images/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20210227212653.jpg)
+
 ## 起源
 
-在SpringBoot出现之前，想要将一个Bean注册到Spring容器中，需要在pom.xml文件中手动引入jar包，并在xml中手动定义Bean,这种手动的方式显得非常低效，想要通过这种方式快速搭建一个完备的项目骨架并不容易。SpringBoot的出现就是为了解决快速搭建生产级项目的问题。它提供了**自动装配**的能力，当我们需要某种功能时，只需要将对应的starter包引入pom.xml，SpringBoot就会自动导入该功能的所有jar包并装配相应的Bean。
+在SpringBoot出现之前，想要将一个Bean注册到Spring容器中，需要在pom.xml文件中手动引入所有依赖的jar包，并在xml中手动定义Bean,这种方式显得非常低效，想要通过这种方式快速搭建一个完备的项目骨架并不容易。SpringBoot的出现就是为了解决快速搭建生产级项目的问题。它提供了**自动装配**的能力，当我们需要某种功能时，只需要将对应的starter包引入pom.xml，SpringBoot就会自动导入该功能的所有jar包并装配相应的Bean。
 
 ```xml
 <!-- 当我们需要搭建web工程时，只需要引入spring-boot-starter-web即可，无需其他操作 -->
@@ -40,7 +42,7 @@
 
  
 
-每个starter都是一个jar包，jar包中包含了一个pom.xml文件，该pom中依赖了这个启动器功能所需的所有依赖。引入了starter之后，项目运行时就可以在classpath下加载到这些jar包中的类。例如，项目中引入了spring-boot-starter-web，而这个jar包中的pom文件中引入了如下的依赖，于是classpath下就有了springMVC相关的类。
+每个starter都是一个jar包，jar包中包含了一个pom.xml文件，该pom中依赖了这个启动器功能所需的所有依赖。引入了starter之后，项目运行时就可以在classpath下加载到这些jar包中的类。例如，项目中引入了spring-boot-starter-web，而这个jar包中的pom文件中为我们定义了完整的依赖，因此classpath下就有了springMVC相关的类。
 
 ```xml
   <dependencies>
@@ -77,17 +79,21 @@
   </dependencies>
 ```
 
-**所以，我们在需要某种功能的时候，只需要引入对应的starter即可，不再需要逐个手动引入该功能需要的所有依赖项，这简化了我们引入jar包的过程，也避免了版本兼容性问题。**
+
+
+**所以，我们在需要某种功能的时候，只需引入对应的starter即可，不再需要逐个手动引入该功能所需的所有依赖包，这简化了我们引入jar包的过程，也避免了版本兼容性问题。**
 
 
 
 ## 自动装配
 
-jar包引入之后，仍需要将这些依赖项的Bean放到Spring容器中，并做相应的配置，才能被正确的使用。
+starter仅仅为我们打包了功能模块所需的依赖包，如何将这些类实例化成Bean到Spring容器仍是个问题。
+
+在SpringBoot出现之前，通常使用xml文件来定义Bean，Spring加载xml文件并实例化这些Bean到容器中。
 
 **SpringBoot通过@EnableAutoConfiguration注解实现了自动配置功能。对于一些常见的功能模块，我们只需要引入对应的starter，SpringBoot就可以自动将其实例化到容器并进行约定的配置。**
 
-在springboot的启动类中，默认在类上标注了`@SpringBootApplication`这个注解，该注解是一个复合注解,包含了`@SpringBootConfiguration` 、 `@EnableAutoConfiguration` 和 `@ComponentScan` 注解。
+SpringBoot在启动类上标注了`@SpringBootApplication`注解，该注解是一个复合注解,主要包含了`@SpringBootConfiguration` 、 `@EnableAutoConfiguration` 和 `@ComponentScan` 注解。
 
 - `@SpringBootConfiguration` 注解包含的核心元注解就是`@Configuration` ，因此可以将其看做`@Configuration` 注解。
 
@@ -181,7 +187,10 @@ public class User {
   ```
 
   ```java
-  // 实现一个导入选择器，用于批量的指定想要导入的类，selectImports方法指定想要导入的类的全限定名，该方法会在spring执行refresh时被调用
+  /**
+   * 实现一个导入选择器，用于批量的指定想要导入的类或者用@Configuration注解的配置类
+   * selectImports方法指定想要导入的类的全限定名，该方法会在spring执行refresh时被调用
+   */
   public class UserImportSelector implements ImportSelector {
   
       @Override
@@ -199,26 +208,31 @@ public class User {
 - 通过实现ImportBeanDefinitionRegistrar接口并导入该实现类，该方法适合需要对容器中的类定义进行更多操作的场景，比如新增、修改、删除、查询容器中的类定义
 
   ```java
+  /**
+   * 在Configuration中导入一个类定义注册器的实现类，对类定义进行操作
+   */
   @Configuration
-  @Import(UserImportBeanDefinitionRegistrar.class) // 在Configuration中导入一个类定义注册器的实现类，对类定义进行操作
-  public class BeanImportConfig {
+  @Import(UserImportBeanDefinitionRegistrar.class)
+public class BeanImportConfig {
   }
   ```
-
+  
   ```java
-  // 类定义注册器的自定义实现，通过registerBeanDefinitions方法对类定义进行操作
+  /* 
+   * 类定义注册器的自定义实现，通过registerBeanDefinitions方法对类定义进行操作
+   */
   public class UserImportBeanDefinitionRegistrar implements ImportBeanDefinitionRegistrar {
   
       @Override
       public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-          registry.registerBeanDefinition("user",new RootBeanDefinition(User.class));
+        registry.registerBeanDefinition("user",new RootBeanDefinition(User.class));
           registry.removeBeanDefinition(User.class.getName());
-      }
+    }
   }
   ```
-
   
-
+  
+  
   我们通过查看@EnableAutoConfiguration注解的源码可以得知，SpringBoot通过@Import注解引入了一个ImportSelector接口的实现类来实现Bean的自动配置。源码如下：
   
   ```java
@@ -228,55 +242,48 @@ public class User {
   }
   ```
 
-由于SpringBoot使用@Import加载ImportSelector接口的实现类的方案来加载依赖项的类实例到容器，**于是我们可以猜测，这个AutoConfigurationImportSelector类的selectImports方法返回了一个由类全限定名组成的数组，这些类就是需要注入到Spring容器的Bean的类名，或者是实例化这些Bean的配置类。**
+由于SpringBoot使用@Import加载ImportSelector接口的实现类的方案来加载依赖项的类实例到容器，**我们可以猜测，这个AutoConfigurationImportSelector类的selectImports方法返回了一个由类全限定名组成的数组，这些类就是需要注入到Spring容器的Bean的类名，或者是实例化这些Bean的配置类。**
 
 下面我们通过查看源码来验证这一猜想。
 
 通过前面对@Import用法的学习我们已经知道，ImportSelector接口用于批量导入配置类或者Bean，Spring容器启动时，在refresh()方法中最终会调用到该接口的selectImports()方法，获取该方法所提供的类全限定名组成的数组。因此，我们进入源码查看AutoConfigurationImportSelector这个类的selectImports()方法提供了哪些类的全限定名。
 
+`AutoConfigurationImportSelector.java` 简化后的源码：
+
+向Spring提供配置类的全限定名列表，列表从getAutoConfigurationEntry方法获得：
+
 ```java
-// AutoConfigurationImportSelector.java
-// 向Spring提供配置类的全限定名
 @Override
 public String[] selectImports(AnnotationMetadata annotationMetadata) {
-	if (!isEnabled(annotationMetadata)) {
-		return NO_IMPORTS;
-	}
 	AutoConfigurationEntry autoConfigurationEntry = getAutoConfigurationEntry(annotationMetadata);
 	return StringUtils.toStringArray(autoConfigurationEntry.getConfigurations());
-
-// 获取候选配置的列表，进行去重过滤等检查后返回
+```
+获取候选配置的列表，进行去重过滤等检查后返回，配置列表通过调用getCandidateConfigurations方法获得：
+```java
 protected AutoConfigurationEntry getAutoConfigurationEntry(AnnotationMetadata annotationMetadata) {
-	if (!isEnabled(annotationMetadata)) {
-		return EMPTY_ENTRY;
-	}
-	AnnotationAttributes attributes = getAttributes(annotationMetadata);
 	List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
-	configurations = removeDuplicates(configurations);
-	Set<String> exclusions = getExclusions(annotationMetadata, attributes);
-	checkExcludedClasses(configurations, exclusions);
-	configurations.removeAll(exclusions);
-	configurations = getConfigurationClassFilter().filter(configurations);
-	fireAutoConfigurationImportEvents(configurations, exclusions);
 	return new AutoConfigurationEntry(configurations, exclusions);
 }
+```
 
-// 通过SpringFactoriesLoader获取META-INF/spring.factories文件中对应的类路径列表
+通过SpringFactoriesLoader获取当前jar包中META-INF/spring.factories文件中对应属性名为`EnableAutoConfiguration.class`的全限定名的类名列表：
+
+```java
 protected List<String> getCandidateConfigurations(AnnotationMetadata metadata, AnnotationAttributes attributes) {
 	List<String> configurations = SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),
 			getBeanClassLoader());
-	Assert.notEmpty(configurations, "No auto configuration classes found in META-INF/spring.factories. If you "
-			+ "are using a custom packaging, make sure that file is correct.");
 	return configurations;
 }
-    
-// 返回EnableAutoConfiguration这个类
+```
+```java
 protected Class<?> getSpringFactoriesLoaderFactoryClass() {
 	return EnableAutoConfiguration.class;
 }
 ```
 
-这段代码的执行逻辑如下：
+
+
+整理一下上述逻辑：
 
 -  @Import注解导入AutoConfigurationImportSelector类；
 
@@ -288,13 +295,13 @@ protected Class<?> getSpringFactoriesLoaderFactoryClass() {
 
   下图是spring.factories文件中找到的配置类列表的部分截图：
 
-  ![image-20210227154046294](../images/image-20210227154046294.png)
+  ![image-20210227154046294](C:/Users/wuyulin/Desktop/image-20210227154046294.png)
 
 从图中我们可以看到大量的配置类的全限定名，Spring会加载这些类并对类中的@Bean进行实例化。
 
 **至此，我们验证了上述猜想，AutoConfigurationImportSelector类中的selectImports方法返回了一个由配置类的全限定名组成的字符串数组，Spring只需要加载这些配置类，并逐个调用类中的@Bean注解的方法，即可实例化所需的Bean实例。**
 
-但是，仍有一个问题没有解决。selectImports方法返回的类名列表是Spring支持自动装配的所有功能列表，我们可能只用到其中的一个或几个而已，没有用到的功能模块自然不需要处理。那么，Spring是如何判断是否应该处理那些配置类呢？
+但是，仍有一个问题没有解决。selectImports方法返回的类名列表是Spring支持自动装配的所有功能列表，我们可能只用到其中的一个或几个而已，没有用到的功能模块自然不需要处理。那么，Spring是如何判断是否应该处理哪些配置类呢？
 
 SpringBoot通过每个配置类中标注的@Conditional系列注解来判断是否需要处理相应配置。
 
@@ -323,7 +330,7 @@ public class WebMvcAutoConfiguration {
 
 @Configuration注解表明了该类为配置类，类中的@Bean注解的方法会返回Bean实例；
 
-@Conditional系列注解表示在某些条件下执行，例如@ConditionalOnWebApplication表示需要在Web应用中才能使用该配置，@ConditionalOnClass表示在classpath下需要有指定的类才可以使用；@Conditional系列的其他注解类似的见名知意。
+@Conditional系列注解表示在某些条件下执行，例如@ConditionalOnWebApplication表示需要在Web应用中才能使用该配置，@ConditionalOnClass表示在classpath下需要有指定的类才可以使用；@Conditional系列的其他注解也类似的见名知意。
 
 **因此，如果我们并没有引入`spring-boot-starter-web`，classpath下就不会存在相应的类，也就无法满足@Conditional系列注解中的条件，此时SpringBoot将不会处理对应的配置。**
 
@@ -331,5 +338,5 @@ public class WebMvcAutoConfiguration {
 
 ## 总结
 
- SpringBoot为我们提供了快速搭建项目的能力，这种能力来源于starter对功能模块的依赖项的封装和约定的配置。当SpringBoot的主类启动时，本质上是通过@Import注解将这些配置类加载并执行其方法，以达到自动配置的目的，@Conditional注解则声明这些配置类和方法的执行条件，达到按需配置的效果。 
+ SpringBoot为我们提供了快速搭建项目的能力，这种能力来源于starter对功能模块的依赖项的封装和约定的配置。当SpringBoot主类启动时，@SpringBootApplication注解最终通过它的@Import元注解将这些配置类加载并执行其方法，以达到自动配置的目的，@Conditional注解则声明这些配置类和方法的执行条件，达到按需配置的目的。 
 
