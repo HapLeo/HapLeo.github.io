@@ -81,6 +81,23 @@ partition：分区，为了做到高可用，kafka 把一个 topic 拆分成多�
 ### 问答
 
 1. 请说明 ISR 的作用？
-2. 
+
+
+
+Kafka与RabbitMQ的选型？
+
+- 相同点
+  - 都是分布式消息队列
+  - 都支持消息持久化
+  - 都有副本实现高可用
+- 不同点
+  - Kafka是发布订阅模式，通过订阅topic获取消息，使用单一消费组可实现点对点模式；RabbitMQ是点对点模式，通过Queue获取消息，使用Exchange路由来实现发布订阅模式；
+  - 顺序性：Kafka保证了分区顺序性，RabbitMQ保证了队列顺序性；
+  - 性能：Kafka的topic partition分布在多台机器上，支持多机并发，RabbitMQ的Queue并未分片，只能由一台broker接受consumer消费；
+  - 容灾：Kafka对分区做冗余副本，RabbitMQ对Queue做冗余副本；
+  - 消息持久化：Kafka中的消息消费完毕并不会立刻删除，而是设置过期时间自动删除，RabbitMQ中的消息消费完毕会被立刻删除。
+  - RabbitMQ自带了监控页面，方便运维，Kafka没有；
+
+总结：Kafka相较于RabbitMQ，将消息进行了分片处理，提高了吞吐量。因此，对吞吐量有需求的系统应当选用Kafka，在吞吐量没有要求的情况下两者皆可。
 
 
